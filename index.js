@@ -43,16 +43,21 @@ const mongoDB = async (req, res) => {
 app.get('/', async (req, res) => {
     try {
         const allProducts = await Product.find();
+
+        // countDocuments is to count the number of documents
+
+        const countProducts = await Product.find().countDocuments()
         const limitedProducts = await Product.find({ price: { $gt: 17 } })
-        res.status(202).send({
+        res.status(200).send({
             success: true,
             message: 'Products are available',
+            count: countProducts,
             limited: limitedProducts,
             Data: allProducts
 
         });
     } catch (error) {
-        res.status(200).send({
+        res.status(500).send({
             success: false,
             message: error.message
         })
@@ -81,8 +86,28 @@ app.get('/product/:id', async (req, res) => {
 
         });
     } catch (error) {
-        res.status(200).send(error.message)
+        res.status(404).send(error.message)
 
+    }
+})
+
+//Qiery operator using from price
+
+app.get('/products', async (req, res) => {
+
+
+    try {
+        const price = req.query.price
+        //query instead of params for http://localhost:3000/products?price=17 quary(?)
+
+        const quaryProduct = await Product.find({ price: { $eq: 18 } })
+
+        if (price) {
+            res.status(200).send(quaryProduct)
+        }
+
+    } catch (error) {
+        res.status(404).send(error.message)
     }
 })
 
