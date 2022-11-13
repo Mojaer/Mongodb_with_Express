@@ -11,8 +11,27 @@ const { ppid } = require('process');
 
 
 const productDb = new mongoose.Schema({
-    tittle: String,
-    price: Number,
+    tittle: {
+        //scema validation
+        type: String,
+        required: true,
+        trim: true,
+        maxLength: [10, 'this is extended 10']          //error massge can be sent 
+        , enum: {
+            values: ['iphone', 'samsung', 'android',],   //enum is used for spcific value
+            message: "invlid input"
+        }
+    },
+    price: {
+        type: Number,
+        max: 30,
+        validate: {
+            validator: (price) => {                      //custom vlidation of price
+                return price >= 40
+            },
+            message: (props) => `${props.price} is not valid`
+        }
+    },
     description: String,
     createAt: {
         type: Date,
@@ -40,7 +59,7 @@ const mongoDB = async (req, res) => {
 
 //GET request to see all product-----------------------------------------------------------
 
-app.get('/', async (req, res) => {
+app.get('/product', async (req, res) => {
     try {
         const allProducts = await Product.find();
 
@@ -131,6 +150,50 @@ app.post('/product', async (req, res) => {
 
         res.status(500).send(error.message)
     }
+})
+
+//PUT request to update--------------------------------------------------------------------------
+
+app.put('/product/:id', async (req, res) => {
+    const id = req.params.id;
+    const tittle = req.body.tittle;
+
+    const updatedProduct = await Product.findByIdAndUpdate({ _id: id }, { $set: { tittle: tittle } }, { new: true })
+
+    try {
+        res.status(202).send({
+            massage: 'success',
+            Data: updatedProduct
+        })
+
+    } catch (error) {
+        res.status(500).send(error.message)
+
+    }
+})
+
+//Delete request to delete product----------------------------------------------------------------
+
+app.delete('/product/:id', async (req, res) => {
+    const id = req.params.id;
+    // const product = await Product.deleteOne({ _id: id });    to delete single one
+
+    const deletedProduct = await Product.findByIdAndDelete({ _id: id }); // findByIdAndDelete is to delete and return its data
+    const allProducts = await Product.find();
+
+    try {
+        res.status(202).send({
+            success: true,
+            message: 'Product is deleted',
+            deletedData: deletedProduct,
+            Data: allProducts
+        });
+
+    } catch (error) {
+        res.status(500).send(error.message)
+
+    }
+
 })
 
 // Listen in a port ----------------------------------------------------------------------------
